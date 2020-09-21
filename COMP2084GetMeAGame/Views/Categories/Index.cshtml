@@ -1,0 +1,24 @@
+﻿@model IEnumerable<COMP2084GetMeAGame.Models.Category>
+
+<h1>Pick a Category to browse our store</h1>
+
+<ul>
+    @foreach (var category in Model)
+    {
+        <li>
+            <a asp-controller="Categories" asp-action="Browse" asp-route-categoryName="@category.Name">@category.Name</a>  
+        </li>
+    }
+</ul>
+
+@*<ul>
+    <li>
+        <a asp-controller="Categories" asp-action="Browse" asp-route-categoryName="Category 1">Category 1</a>
+    </li>
+    <li>
+        <a asp-controller="Categories" asp-action="Browse" asp-route-categoryName="Category 2">Category 2</a>
+    </li>
+    <li>
+        <a asp-controller="Categories" asp-action="Browse" asp-route-categoryName="Category 3">Category 3</a>
+    </li>
+</ul>*@
