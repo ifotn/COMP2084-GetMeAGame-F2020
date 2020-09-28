@@ -11,17 +11,17 @@ namespace COMP2084GetMeAGame.Controllers
     {
         public IActionResult Index()
         {
-            // use our category model & some fake data to pass to the view
-            // make an empty list of categories
+            // use the category model to create 10 fake categories and send to the view for display
+            // create an empty list of categories
             var categories = new List<Category>();
 
-            // use a loop to make 10 categories and add each one to the list
+            // use a loop to create 10 fake categories
             for (var i = 1; i <= 10; i++)
             {
                 categories.Add(new Category { Id = i, Name = "Category " + i.ToString() });
             }
-            
-            // now pass the categories list when loading the view
+
+            // pass the final list to the view for display
             return View(categories);
         }
 
@@ -31,6 +31,12 @@ namespace COMP2084GetMeAGame.Controllers
             ViewBag.categoryName = categoryName;
 
             // load the view /Views/Categories/Browse
+            return View();
+        }
+
+        public IActionResult AddCategory()
+        {
+            // display an empty form where a user could add a new category
             return View();
         }
     }
