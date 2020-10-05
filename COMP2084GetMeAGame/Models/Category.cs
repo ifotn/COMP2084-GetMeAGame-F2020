@@ -12,5 +12,8 @@ namespace COMP2084GetMeAGame.Models
 
         [Required]
         public string Name { get; set; }
+
+        // reference the child model (1 Category - Many Products)
+        public List<Product> Products { get; set; }
     }
 }
