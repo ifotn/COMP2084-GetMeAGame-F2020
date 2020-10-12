@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using COMP2084GetMeAGame.Data;
 using COMP2084GetMeAGame.Models;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace COMP2084GetMeAGame.Controllers
 {
@@ -23,7 +25,7 @@ namespace COMP2084GetMeAGame.Controllers
         public async Task<IActionResult> Index()
         {
             var applicationDbContext = _context.Products.Include(p => p.Category);
-            return View(await applicationDbContext.ToListAsync());
+            return View(await applicationDbContext.OrderBy(p => p.Name).ToListAsync());
         }
 
         // GET: Products/Details/5
@@ -48,7 +50,7 @@ namespace COMP2084GetMeAGame.Controllers
         // GET: Products/Create
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
+            ViewData["CategoryId"] = new SelectList(_context.Categories.OrderBy(c => c.Name), "Id", "Name");
             return View();
         }
 
@@ -57,10 +59,31 @@ namespace COMP2084GetMeAGame.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Price,CategoryId,Photo,Description")] Product product)
+        public async Task<IActionResult> Create([Bind("Id,Name,Price,CategoryId,Description")] Product product, IFormFile Photo)
         {
             if (ModelState.IsValid)
             {
+                // check for and process a photo upload
+                if (Photo.Length > 0)
+                {
+                    // get temp location of uploaded file
+                    var tempFile = Path.GetTempFileName();
+
+                    // create unique name using the Globally Unique Id (GUID) class
+                    // e.g. mypic.jpg -> abc123-mypic.jpg
+                    var fileName = Guid.NewGuid() + "-" + Photo.FileName;
+
+                    // set destination dynamically path and file name
+                    var uploadPath = System.IO.Directory.GetCurrentDirectory() + "\\wwwroot\\img\\product-uploads\\" + fileName;
+
+                    // use a stream to create the new file
+                    using var stream = new FileStream(uploadPath, FileMode.Create);
+                    await Photo.CopyToAsync(stream);
+
+                    // add unique file name as the Photo property of the new product object
+                    product.Photo = fileName;
+                }
+
                 _context.Add(product);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

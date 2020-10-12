@@ -61,11 +61,25 @@ html {
 body {
   /* Margin bottom by footer height */
   margin-bottom: 60px;
+  font-family: Roboto;
 }
+
 .footer {
   position: absolute;
   bottom: 0;
   width: 100%;
   white-space: nowrap;
   line-height: 60px; /* Vertically center the text there */
+}
+
+.img-thumbnail {
+    width: 75px;
+}
+
+.navbar-light {
+    background-color: #e5d70d;
+}
+
+a { 
+    color: #419a1c;
 }
