@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using COMP2084GetMeAGame.Data;
+using COMP2084GetMeAGame.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace COMP2084GetMeAGame.Controllers
@@ -34,5 +36,53 @@ namespace COMP2084GetMeAGame.Controllers
             // load the Browse page and pass it the list of products to display
             return View(products);
         }
+
+        // Shop/AddToCart
+        [HttpPost]
+        public IActionResult AddToCart(int ProductId, int Quantity)
+        {
+            // get current price of the product
+            var price = _context.Products.Find(ProductId).Price;
+
+            // identify the customer
+            var customerId = GetCustomerId();
+
+            // create a new Cart object
+            var cart = new Cart
+            {
+                ProductId = ProductId,
+                Quantity = Quantity,
+                Price = price,
+                CustomerId = customerId,
+                DateCreated = DateTime.Now
+            };
+
+            // use the Carts DbSet in ApplicationContext.cs to save to the database
+            _context.Carts.Add(cart);
+            _context.SaveChanges();
+
+            // redirect to show the current cart
+            return RedirectToAction("Cart");
+        }
+
+        private string GetCustomerId()
+        {
+            // is there already a session variable holding an identifier for this customer?
+            if (HttpContext.Session.GetString("CustomerId") == null)
+            {
+                // cart is empty, user is unknown
+                var customerId = "";
+
+                // use a Guid to generate a new unique identifier
+                customerId = Guid.NewGuid().ToString();
+
+                // now store the new identifier in a session variable
+                HttpContext.Session.SetString("CustomerId", customerId);
+            }
+
+            // return the CustomerId to the AddToCart method
+            return HttpContext.Session.GetString("CustomerId");
+        }
+        
     }
 }
