@@ -24,5 +24,15 @@ namespace COMP2084GetMeAGame.Controllers
             var categories = _context.Categories.OrderBy(c => c.Name).ToList();
             return View(categories);
         }
+
+        // Shop/Browse/3
+        public IActionResult Browse(int id)
+        {
+            // get the products in the selected category
+            var products = _context.Products.Where(p => p.CategoryId == id).OrderBy(p => p.Name).ToList();
+
+            // load the Browse page and pass it the list of products to display
+            return View(products);
+        }
     }
 }
