@@ -38,7 +38,7 @@ namespace COMP2084GetMeAGame.Controllers
             return View(products);
         }
 
-        // Shop/AddToCart
+        // GET: /Shop/AddToCart
         [HttpPost]
         public IActionResult AddToCart(int ProductId, int Quantity)
         {
@@ -48,20 +48,33 @@ namespace COMP2084GetMeAGame.Controllers
             // identify the customer
             var customerId = GetCustomerId();
 
-            // create a new Cart object
-            var cart = new Cart
+            // check if product already exists in this user's cart
+            var cartItem = _context.Carts.SingleOrDefault(c => c.ProductId == ProductId && c.CustomerId == customerId);
+
+            if (cartItem != null)
             {
-                ProductId = ProductId,
-                Quantity = Quantity,
-                Price = price,
-                CustomerId = customerId,
-                DateCreated = DateTime.Now
-            };
+                // product already exists so update the quantity
+                cartItem.Quantity += Quantity;
+                _context.Update(cartItem);
+                _context.SaveChanges();
+            }
+            else
+            {
+                // create a new Cart object
+                var cart = new Cart
+                {
+                    ProductId = ProductId,
+                    Quantity = Quantity,
+                    Price = price,
+                    CustomerId = customerId,
+                    DateCreated = DateTime.Now
+                };
 
-            // use the Carts DbSet in ApplicationContext.cs to save to the database
-            _context.Carts.Add(cart);
-            _context.SaveChanges();
-
+                // use the Carts DbSet in ApplicationContext.cs to save to the database
+                _context.Carts.Add(cart);
+                _context.SaveChanges();
+            }
+                
             // redirect to show the current cart
             return RedirectToAction("Cart");
         }
@@ -85,7 +98,7 @@ namespace COMP2084GetMeAGame.Controllers
             return HttpContext.Session.GetString("CustomerId");
         }
         
-        //Shop/Cart
+        // GET: /Shop/Cart
         public IActionResult Cart()
         {
             // get CustomerId from the session variable
@@ -96,6 +109,22 @@ namespace COMP2084GetMeAGame.Controllers
 
             // load the cart page and display the customer's items
             return View(cartItems);
+        }
+
+        // GET: /Shop/RemoveFromCart/12
+        public IActionResult RemoveFromCart(int id)
+        {
+            // remove the selected item from Carts table
+            var cartItem = _context.Carts.Find(id);
+
+            if (cartItem != null)
+            {
+                _context.Carts.Remove(cartItem);
+                _context.SaveChanges();
+            }
+
+            // redirect to updated Cart page
+            return RedirectToAction("Cart");
         }
     }
 }
