@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using COMP2084GetMeAGame.Data;
 using COMP2084GetMeAGame.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -107,6 +108,12 @@ namespace COMP2084GetMeAGame.Controllers
             // get items in this customer's cart - add reference to the parent object: Product
             var cartItems = _context.Carts.Include(c => c.Product).Where(c => c.CustomerId == customerId).ToList();
 
+            // count the # of items in the Cart and write to a session variable to display in the navbar
+            var itemCount = (from c in _context.Carts
+                             where c.CustomerId == customerId
+                             select c.Quantity).Sum();
+            HttpContext.Session.SetInt32("ItemCount", itemCount);
+
             // load the cart page and display the customer's items
             return View(cartItems);
         }
@@ -125,6 +132,33 @@ namespace COMP2084GetMeAGame.Controllers
 
             // redirect to updated Cart page
             return RedirectToAction("Cart");
+        }
+
+        // GET: /Shop/Checkout
+        [Authorize]
+        public IActionResult Checkout()
+        {
+            return View();
+        }
+
+        // POST: /Shop/Checkout
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Checkout([Bind("Address,City,Province,PostalCode")] Order order)
+        {
+            // auto-fill the 3 properties we removed from the form
+            order.OrderDate = DateTime.Now;
+            order.CustomerId = User.Identity.Name;
+            order.Total = (from c in _context.Carts
+                           where c.CustomerId == HttpContext.Session.GetString("CustomerId")
+                           select c.Quantity * c.Price).Sum();
+
+            // now store Order in a session variable before moving to Payment
+            HttpContext.Session.SetObject("Order", order);
+
+            // load the payment page
+            return RedirectToAction("Payment");
         }
     }
 }
