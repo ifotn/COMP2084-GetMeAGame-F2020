@@ -9,6 +9,8 @@ namespace COMP2084GetMeAGame.Models
     public class Order
     {
         public int Id { get; set; }
+
+        [Display(Name = "Order Date")]
         public DateTime OrderDate { get; set; }
         public string CustomerId { get; set; }
         public string Address { get; set; }

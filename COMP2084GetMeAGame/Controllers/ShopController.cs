@@ -271,6 +271,9 @@ namespace COMP2084GetMeAGame.Controllers
 
             _context.SaveChanges();
 
+            // clear the Session ItemCount variable
+            HttpContext.Session.SetInt32("ItemCount", 0);
+
             // load the Details page for the new order 
             return RedirectToAction("Details", "Orders", new { @id = order.Id });
         }

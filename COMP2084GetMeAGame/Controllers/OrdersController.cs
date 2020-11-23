@@ -24,8 +24,15 @@ namespace COMP2084GetMeAGame.Controllers
         // GET: Orders
         public async Task<IActionResult> Index()
         {
-            // filter order list for the current user only
-            return View(await _context.Orders.Where(o => o.CustomerId == User.Identity.Name).ToListAsync());
+            if (User.IsInRole("Administrator"))
+            {
+                return View(await _context.Orders.OrderByDescending(o => o.Id).ToListAsync());
+            }
+            else
+            {
+                // filter order list for the current user only
+                return View(await _context.Orders.Where(o => o.CustomerId == User.Identity.Name).OrderByDescending(o => o.Id).ToListAsync());
+            }
         }
 
         // GET: Orders/Details/5
@@ -36,7 +43,7 @@ namespace COMP2084GetMeAGame.Controllers
                 return NotFound();
             }
 
-            var order = await _context.Orders.Include(o => o.OrderDetails)
+            var order = await _context.Orders.Include(o => o.OrderDetails).ThenInclude(o => o.Product)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (order == null)
             {
@@ -44,10 +51,13 @@ namespace COMP2084GetMeAGame.Controllers
             }
 
             // ensure current user owns the order being requested
-            if (User.Identity.Name != order.CustomerId)
+            if (!User.IsInRole("Administrator"))
             {
-                return Unauthorized();
-            }
+                if (User.Identity.Name != order.CustomerId)
+                {
+                    return Unauthorized();
+                }
+            }               
 
             return View(order);
         }
