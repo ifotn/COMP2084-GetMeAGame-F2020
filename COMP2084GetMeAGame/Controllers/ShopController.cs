@@ -10,6 +10,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
+// add references for Stripe
+using Stripe;
+using System.Configuration;
+using Stripe.Checkout;
+
 namespace COMP2084GetMeAGame.Controllers
 {
     public class ShopController : Controller
@@ -151,7 +156,7 @@ namespace COMP2084GetMeAGame.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Checkout([Bind("Address,City,Province,PostalCode")] Order order)
+        public IActionResult Checkout([Bind("Address,City,Province,PostalCode")] Models.Order order)
         {
             // auto-fill the 3 properties we removed from the form
             order.OrderDate = DateTime.Now;
@@ -172,7 +177,7 @@ namespace COMP2084GetMeAGame.Controllers
         public IActionResult Payment()
         {
             // get the order from the Session variable
-            var order = HttpContext.Session.GetObject<Order>("Order");
+            var order = HttpContext.Session.GetObject<Models.Order>("Order");
 
             // fetch & display the Order Total to the customer
             ViewBag.Total = order.Total;
@@ -182,6 +187,50 @@ namespace COMP2084GetMeAGame.Controllers
 
             // load the Payment view
             return View();
+        }
+
+        // POST: /Shop/Payment
+        [Authorize]
+        [HttpPost]
+        public ActionResult ProcessPayment()
+        {
+            // get order from session variable
+            var order = HttpContext.Session.GetObject<Models.Order>("Order");
+
+            // get Stripe Secret Key from the configuration
+            StripeConfiguration.ApiKey = _configuration.GetSection("Stripe")["SecretKey"];
+
+            // .net integration code from https://stripe.com/docs/checkout/integration-builder
+            var options = new SessionCreateOptions
+            {
+                PaymentMethodTypes = new List<string>
+                {
+                  "card",
+                },
+                LineItems = new List<SessionLineItemOptions>
+                {
+                  new SessionLineItemOptions
+                  {
+                    PriceData = new SessionLineItemPriceDataOptions
+                    {
+                      UnitAmount = (long?)(order.Total * 100),
+                      Currency = "cad",
+                      ProductData = new SessionLineItemPriceDataProductDataOptions
+                      {
+                        Name = "COMP2084 Get Me a Game Purchase",
+                      },
+                    },
+                    Quantity = 1,
+                  },
+                },
+                Mode = "payment",
+                SuccessUrl = "https://" + Request.Host + "/SaveOrder",
+                CancelUrl = "https://" + Request.Host + "/Shop/Cart"
+            };
+
+            var service = new SessionService();
+            Session session = service.Create(options);
+            return Json(new { id = session.Id });
         }
     }
 }
