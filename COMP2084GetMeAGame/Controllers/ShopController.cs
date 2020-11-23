@@ -224,13 +224,55 @@ namespace COMP2084GetMeAGame.Controllers
                   },
                 },
                 Mode = "payment",
-                SuccessUrl = "https://" + Request.Host + "/SaveOrder",
+                SuccessUrl = "https://" + Request.Host + "/Shop/SaveOrder",
                 CancelUrl = "https://" + Request.Host + "/Shop/Cart"
             };
 
             var service = new SessionService();
             Session session = service.Create(options);
             return Json(new { id = session.Id });
+        }
+
+        // GET: /Shop/SaveOrder
+        [Authorize]
+        public IActionResult SaveOrder()
+        {
+            // the current order from session variable
+            var order = HttpContext.Session.GetObject<Models.Order>("Order");
+
+            // create a new order in the db, this generates and copies the new Id to this order object
+            _context.Orders.Add(order);
+            _context.SaveChanges();
+
+            // copy each item from the user's cart to a new OrderDetail record
+            var cartItems = _context.Carts.Where(c => c.CustomerId == HttpContext.Session.GetString("CustomerId"));
+
+            foreach (var item in cartItems)
+            {
+                var orderDetail = new OrderDetail
+                {
+                    OrderId = order.Id,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    Cost = item.Price
+                };
+
+                _context.OrderDetails.Add(orderDetail);
+            }
+
+            // save new line items to db
+            _context.SaveChanges();
+
+            // empty the cart
+            foreach (var item in cartItems)
+            {
+                _context.Carts.Remove(item);
+            }
+
+            _context.SaveChanges();
+
+            // load the Details page for the new order 
+            return RedirectToAction("Details", "Orders", new { @id = order.Id });
         }
     }
 }
