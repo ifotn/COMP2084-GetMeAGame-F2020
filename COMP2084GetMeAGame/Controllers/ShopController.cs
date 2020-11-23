@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace COMP2084GetMeAGame.Controllers
 {
@@ -16,10 +17,15 @@ namespace COMP2084GetMeAGame.Controllers
         // db connection
         private readonly ApplicationDbContext _context;
 
+        // configuration dependency needed to read Stripe Keys from appsettings.json or the secret key store
+        private IConfiguration _configuration;
+
         // connect to the db whenever this controller is used
-        public ShopController(ApplicationDbContext context)
+        // this controller uses Depedency Injection - it requires a db connection object when it's created
+        public ShopController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         public IActionResult Index()
@@ -159,6 +165,23 @@ namespace COMP2084GetMeAGame.Controllers
 
             // load the payment page
             return RedirectToAction("Payment");
+        }
+
+        // GET: /Shop/Payment
+        [Authorize]
+        public IActionResult Payment()
+        {
+            // get the order from the Session variable
+            var order = HttpContext.Session.GetObject<Order>("Order");
+
+            // fetch & display the Order Total to the customer
+            ViewBag.Total = order.Total;
+
+            // also use the ViewBag to set the PublishableKey, which we can read from the Configuration
+            ViewBag.PublishableKey = _configuration.GetSection("Stripe")["PublishableKey"];
+
+            // load the Payment view
+            return View();
         }
     }
 }
