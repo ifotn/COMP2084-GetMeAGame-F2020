@@ -36,7 +36,8 @@ namespace COMP2084GetMeAGame.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                //return NotFound();
+                return View("Error");
             }
 
             var product = await _context.Products
@@ -44,10 +45,11 @@ namespace COMP2084GetMeAGame.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
-                return NotFound();
+                //return NotFound();
+                return View("Error");
             }
 
-            return View(product);
+            return View("Details", product);
         }
 
         // GET: Products/Create
