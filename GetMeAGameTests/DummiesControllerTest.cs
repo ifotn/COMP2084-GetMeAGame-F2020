@@ -1,4 +1,5 @@
 ﻿using COMP2084GetMeAGame.Controllers;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,19 @@ namespace GetMeAGameTests
 
             // assert
             Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public void IndexLoadsIndexView()
+        {
+            // arrange
+            var controller = new DummiesController();
+
+            // act, we must cast the return type from IActionResult (which is generic) to a ViewResult (which is specific)
+            var result = (ViewResult)controller.Index();
+
+            // assert
+            Assert.AreEqual("Index", result.ViewName);
         }
     }
 }
